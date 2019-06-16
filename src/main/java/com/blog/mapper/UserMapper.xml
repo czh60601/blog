@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.blog.mapper.UserMapper">	
+	<insert id="add">
+		insert into user(username, password,role,nickname,googleKey) values(#{username},password(#{password}),#{role},#{nickname},#{googleKey})
+	</insert>
+	
+	<update id="deleteByQuery">
+		update user set status=0 where
+		<if test="uids != null">
+			uid in
+			<foreach item="item" index="index" collection="uids" open="(" separator="," close=")">
+          		#{item}
+      		</foreach>
+		</if>
+	</update>
+	
+	<update id="updateByModel">
+		update user
+		<set>
+		<if test="username != null and username != ''">
+			username=#{username},
+		</if>
+		<if test="nickname != null and nickname != ''">
+			nickname=#{nickname},
+		</if>
+		<if test="password != null and password != ''">
+			password=password(#{password}),
+		</if>
+		<if test="role != null">
+			role=#{role},
+		</if>
+		<if test="status != null">
+			status=#{status},
+		</if>
+		<if test="info != null">
+			info=#{info},
+		</if>
+		<if test="googleKey != null and googleKey != ''">
+			googleKey=#{googleKey},
+		</if>
+		</set>
+		where uid=#{uid}
+	</update>
+	
+	<select id="selectByQuery" resultType="com.blog.model.User">
+		select
+			usr.uid,usr.username,usr.password,usr.role,usr.nickname,usr.status,usr.info,usr.googleKey,r.roleName
+		from user usr,rbac_role r
+		where
+			status != 0
+			and usr.role=r.id
+			and r.family like '%${logRole}%'
+		<if test="nickname != null and nickname != ''">
+			and usr.nickname like  '%${nickname}%' 
+		</if>
+		<if test="username != null and username != ''">
+	 		and usr.username like '%${username}%'
+		</if>
+		<if test="uid != null">
+	 		and usr.uid=#{uid}
+		</if>
+		<if test="role != null">
+	 		and usr.role=#{role}
+		</if>
+		<if test="admin != null">
+	 		and r.admin=#{admin}
+		</if>
+		 order by usr.role
+		 limit #{start},#{limit}
+	</select>
+	
+	<select id="countByQuery" resultType="int">
+		select
+			count(1)
+		from user usr,rbac_role r
+		where
+			status != 0
+			and usr.role=r.id
+			and r.family like '%${logRole}%'
+		<if test="nickname != null and nickname != ''">
+			and usr.nickname like  '%${nickname}%' 
+		</if>
+		<if test="username != null and username != ''">
+	 		and usr.username like '%${username}%'
+		</if>
+		<if test="uid != null">
+	 		and usr.uid=#{uid}
+		</if>
+		<if test="role != null">
+	 		and usr.role=#{role}
+		</if>
+		<if test="admin != null">
+	 		and r.admin=#{admin}
+		</if>
+	</select>
+	
+	<select id="selectByModel" resultType="com.blog.model.User">
+		select
+			usr.uid,usr.username,usr.password,usr.role,usr.nickname,usr.status,usr.info,usr.googleKey,r.roleName
+		from user usr,rbac_role r
+		where
+		<if test="status != null">
+			status=#{status}
+		</if>
+		<if test="status == null">
+			status != 0
+		</if>
+			and usr.role=r.id
+		<if test="username != null">
+	 		and usr.username=#{username}
+		</if>
+		<if test="password != null">
+	 		and usr.password=password(#{password})
+		</if>
+		<if test="uid != null">
+	 		and usr.uid=#{uid}
+		</if>
+	</select>
+	
+	<update id="editPassword">
+		update user set password=password(#{newpwd}) where uid=#{uid} and password=password(#{oldpwd})
+	</update>
+	
+	<select id="checkExist" resultType="int">
+		select count(1) from user where username = #{username} or nickname = #{nickname}
+	</select>
+	
+	<update id="initGoogleKey">
+		update user set googleKey = null where uid=#{uid}
+	</update>
+	
+	<insert id="logLogin">
+		insert into log_login(uid,username,logip,logtime,logtype,msg,loginhost) values(#{uid},#{username},#{logip},#{logtime},#{logtype},#{msg},#{loginhost})
+	</insert>
+	
+	<select id="selectUnuseByQuery" resultType="com.blog.model.User">
+		select
+			usr.uid,usr.username,usr.password,usr.role,usr.nickname,usr.status,usr.info,usr.googleKey,r.roleName
+		from user usr,rbac_role r
+		where
+			status = 0
+			and usr.role=r.id
+		<if test="nickname != null and nickname != ''">
+			and usr.nickname like  '%${nickname}%' 
+		</if>
+		<if test="username != null and username != ''">
+	 		and usr.username like '%${username}%'
+		</if>
+		<if test="uid != null">
+	 		and usr.uid=#{uid}
+		</if>
+		<if test="role != null">
+	 		and usr.role=#{role}
+		</if>
+		<if test="admin != null">
+	 		and r.admin=#{admin}
+		</if>
+		 order by usr.role
+		 limit #{start},#{limit}
+	</select>
+	
+	<select id="countUnuseByQuery" resultType="int">
+		select
+			count(1)
+		from user usr,rbac_role r
+		where
+			status = 0
+			and usr.role=r.id
+		<if test="nickname != null and nickname != ''">
+			and usr.nickname like  '%${nickname}%' 
+		</if>
+		<if test="username != null and username != ''">
+	 		and usr.username like '%${username}%'
+		</if>
+		<if test="uid != null">
+	 		and usr.uid=#{uid}
+		</if>
+		<if test="role != null">
+	 		and usr.role=#{role}
+		</if>
+		<if test="admin != null">
+	 		and r.admin=#{admin}
+		</if>
+	</select>
+	
+	<delete id="removeByQuery">
+		delete from user where
+		<if test="uids != null">
+			uid in
+			<foreach item="item" index="index" collection="uids" open="(" separator="," close=")">
+          		#{item}
+      		</foreach>
+		</if>
+	</delete>
+	
+	<select id="selectLoginLogByQuery" resultType="com.blog.model.LoginLog">
+		select l.id,l.uid,l.username,u.nickname nickname,l.logip,l.logtime,l.logtype,l.msg,l.loginhost from log_login l left join user u on l.username = u.username
+		<where>
+			<if test="sdate != null and sdate != ''">
+			<![CDATA[and l.logtime >= #{sdate}]]>
+			</if>
+			<if test="edate != null and edate != ''">
+			<![CDATA[and l.logtime <= #{edate}]]>
+			</if>
+			<if test="username != null and username != ''">
+				and l.username like '%${username}%'
+			</if>
+			<if test="logtype == 1">
+				and l.logtype = 1
+			</if>
+			<if test="logtype == -5">
+				and l.logtype != 1
+			</if>
+			<if test="nickname != null and nickname != ''">
+				and u.nickname like '%${nickname}%'
+			</if>
+		</where>
+		order by logtime desc limit #{start},#{limit}
+	</select>
+	
+	<select id="counttLoginLogByQuery" resultType="int">
+		select count(1) from log_login l left join user u on l.username = u.username
+		<where>
+			<if test="sdate != null and sdate != ''">
+			<![CDATA[and l.logtime >= #{sdate}]]>
+			</if>
+			<if test="edate != null and edate != ''">
+			<![CDATA[and l.logtime <= #{edate}]]>
+			</if>
+			<if test="username != null and username != ''">
+				and l.username like '%${username}%'
+			</if>
+			<if test="logtype == 1">
+				and l.logtype = 1
+			</if>
+			<if test="logtype == -5">
+				and l.logtype != 1
+			</if>
+			<if test="nickname != null and nickname != ''">
+				and u.nickname like '%${nickname}%'
+			</if>
+		</where>
+	</select>
+</mapper>

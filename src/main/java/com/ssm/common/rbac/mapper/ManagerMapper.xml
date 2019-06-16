@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ssm.common.rbac.mapper.ManagerMapper">
+	<select id="selectRole" resultType="com.ssm.common.rbac.model.Role">
+		select r.id,r.rolename,r.admin,r.parent,r.family,r.info,GROUP_CONCAT(fk.resources ORDER BY resources asc) resList from rbac_role r left join rbac_rr_fk fk on r.id=fk.role group by r.id
+	</select>
+	
+	<select id="getChildren"  resultType="com.ssm.common.rbac.model.Role">
+		select r.id,r.rolename,r.admin,r.parent,r.family,p.rolename pname,r.info from rbac_role r,rbac_role p where r.parent=p.id and r.family like "%${id}%" <if test="admin != null"> and r.admin=#{admin}</if>
+	</select>
+	
+	<select id="selectRoleByID" resultType="com.ssm.common.rbac.model.Role">
+		select r.id,r.rolename,r.admin,r.parent,r.family,r.info,GROUP_CONCAT(fk.resources ORDER BY resources asc) resList from rbac_role r left join rbac_rr_fk fk on r.id=fk.role where r.id = #{id}
+	</select>
+	
+	<insert id="addRole">
+		insert into rbac_role(rolename,parent,family,admin,info) values(#{rolename},#{parent},#{family},#{admin},#{info})
+	</insert>
+	
+	<update id="updateRole">
+		update rbac_role set rolename=#{rolename},parent=#{parent},family=#{family},admin=#{admin},info=#{info} where id=#{id}
+	</update>
+	
+	<select id="selectResources" resultType="com.ssm.common.rbac.model.Resources">
+		select id,resname,`key`,value,path,type,ico,flow,flowtree,ipcheck,rolecheck,logincheck from rbac_resources
+	</select>
+	
+	<select id="selectResourcesByRoleId" resultType="com.ssm.common.rbac.model.Resources">
+		select r.id,r.resname,r.key,r.value,r.path,r.type,r.ico,r.flow,r.flowtree,r.ipcheck,r.rolecheck,r.logincheck from rbac_resources r,rbac_rr_fk fk where fk.resources=r.id and fk.role=#{roleId} order by resources asc
+	</select>
+	
+	<select id="selectResourcesByID" resultType="com.ssm.common.rbac.model.Resources">
+		select id,resname,`key`,value,path,type,ico,flow,flowtree,ipcheck,rolecheck,logincheck from rbac_resources where id=#{id}
+	</select>
+	
+	<select id="selectResourcesByQuery" resultType="com.ssm.common.rbac.model.Resources">
+		select c.id,c.resname,c.key,c.value,c.path,c.type,c.ico,c.flow,c.flowtree,f.resname flowname,c.ipcheck,c.rolecheck,c.logincheck from rbac_resources c left join rbac_resources f
+		on c.flow = f.id
+		<where>
+			<if test="resname != null and resname != ''">
+				and c.resname like "%${resname}%"
+			</if>
+			<if test="key != null and key != ''">
+				and c.key like "%${key}%"
+			</if>
+			<if test="type != 0">
+				and c.type = #{type}
+			</if>
+		</where>
+		order by c.id desc limit #{start},#{limit}
+	</select>
+	
+	<select id="selectResourcesCountByQuery" resultType="int">
+		select count(1) from rbac_resources
+		<where>
+			<if test="resname != null and resname != ''">
+				and resname like "%${resname}%"
+			</if>
+			<if test="key != null and key != ''">
+				and `key` like "%${key}%"
+			</if>
+			<if test="type != 0">
+				and `type` = #{type}
+			</if>
+		</where>
+	</select>
+	
+	<insert id="addResources">
+		insert into rbac_resources(resname,`key`,value,path,type,ico,flow,flowtree,ipcheck,rolecheck,logincheck) values(#{resname},#{key},#{value},#{path},#{type},#{ico},#{flow},#{flowtree},#{ipcheck},#{rolecheck},#{logincheck})
+	</insert>
+	
+	<update id="updateResources">
+		update rbac_resources set resname=#{resname},`key`=#{key},value=#{value},path=#{path},type=#{type},ico=#{ico},flow=#{flow},flowtree=#{flowtree},ipcheck=#{ipcheck},rolecheck=#{rolecheck},logincheck=#{logincheck} where id=#{id}
+	</update>
+	
+	<select id="existResources" resultType="int">
+		select count(1) from rbac_resources where (
+		<if test="path != null and path != ''"> path=#{path} or </if>
+		`key`=#{key} and value=#{value}
+		)
+		<if test="id != null"> and id!=#{id}</if>
+	</select>
+	
+	<select id="selectUpress" resultType="com.ssm.common.rbac.model.Resources">
+		select id,resname,`key`,value,path,type,ico,flow,flowtree,ipcheck,rolecheck,logincheck from rbac_resources where type!=1
+	</select>
+	
+	<select id="selectFKByRoleID" resultType="String">
+		select resources from rbac_rr_fk where role=#{roleId}
+	</select>
+	
+	<delete id="fkDel">
+		delete from rbac_rr_fk where role=#{roleId} and resources in
+		<foreach collection="delTree" item="item" separator="," open="(" close=")">
+			#{item}
+		</foreach>
+	</delete>
+	
+	<insert id="fkSet">
+		insert into rbac_rr_fk(role,resources) values
+		<foreach collection="newTree" item="item" separator=",">
+			(#{roleId},#{item})
+		</foreach>
+	</insert>
+</mapper>

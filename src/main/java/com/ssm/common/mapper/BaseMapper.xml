@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ssm.common.mapper.BaseMapper">
+
+	<insert id="add"></insert>
+
+	<delete id="deleteByQuery"></delete>
+
+	<update id="updateByModel"></update>
+	
+	<select id="selectByModel" resultType="hashmap"></select>
+	
+	<select id="selectByQuery" resultType="hashmap"></select>
+	
+	<select id="countByQuery" resultType="int"></select>
+</mapper>
